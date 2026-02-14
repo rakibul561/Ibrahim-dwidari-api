@@ -1,0 +1,309 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName    String
+  lastName     String
+  email        String   @unique
+  password     String
+  role         Role
+  profileImage String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+}
+
+enum AccountType {
+  PERSONAL
+  BUSINESS
+}
+
+enum ApplicationStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum ResidencyType {
+  RENT
+  MORTGAGE
+  OWNED
+}
+
+model Application {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  referenceId String @unique
+
+  /**
+   * ---- Meta ----
+   */
+  type          AccountType
+  status        ApplicationStatus @default(PENDING)
+  submittedDate DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  /**
+   * ---- Personal Info ----
+   */
+  firstName                      String
+  middleName                     String?
+  lastName                       String
+  address                        String
+  city                           String
+  state                          String
+  zipcode                        String
+  dayTimePhone                   String
+  email                          String
+  ssn                            String
+  driverLicenseNumber            String
+  dateOfBirth                    DateTime
+  yearsOfResidence               String
+  residencyType                  ResidencyType
+  rentMortgagePayment            Float?
+  previousAddress                String?
+  previousCity                   String?
+  previousState                  String?
+  previousZipcode                String?
+  previousTimeOfResidence        String?
+  guarantorPreviousTimeOnJob     String?
+  guarantorPreviousEmployerPhone String?
+  guarantorPreviousEmployerName  String?
+  previousEmployerPhone          String?
+  previousEmployerName           String?
+  previousTimeOnJob              String?
+  signatureData                  String?
+
+  /**
+   * ---- Employment / Income ----
+   */
+  occupation        String?
+  industry          String?
+  employerStatus    String?
+  employerName      String?
+  employerAddress   String?
+  employerCity      String?
+  employerState     String?
+  employerZipcode   String?
+  employerPhone     String?
+  timeOnJob         String?
+  grossAnnualIncome Float
+  otherIncome       Float?
+
+  /**
+   * ---- Business Info (BUSINESS only) ----
+   */
+  businessName          String?
+  businessDbaNumber     String?
+  businessEntity        String?
+  taxId                 String?
+  businessIncorporation String?
+  yearEstablished       String?
+  businessAddress       String?
+  businessCity          String?
+  businessState         String?
+  businessZipcode       String?
+  businessPhone         String?
+  businessEmail         String?
+  yearsInBusiness       String?
+
+  /**
+   * ---- Bank Info ----
+   */
+  bankName           String?
+  bankAccountNumber  String?
+  bankAddress        String?
+  bankCity           String?
+  bankState          String?
+  bankZipcode        String?
+  bankPhone          String?
+  bankContact        String?
+  bankRoutingNumber  String?
+  bankBranchLocation String?
+
+  /**
+   * ---- Guarantor / Co-Signer ----
+   */
+  hasCoSigner Boolean @default(false)
+
+  guarantorFirstName     String?
+  guarantorMiddleName    String?
+  guarantorLastName      String?
+  guarantorAddress       String?
+  guarantorCity          String?
+  guarantorState         String?
+  guarantorZipcode       String?
+  guarantorPhone         String?
+  guarantorEmail         String?
+  guarantorSsn           String?
+  guarantorDriverLicense String?
+  guarantorDob           DateTime?
+
+  guarantorEmployerName      String?
+  guarantorEmployerStatus    String?
+  guarantorEmployerAddress   String?
+  guarantorEmployerCity      String?
+  guarantorEmployerState     String?
+  guarantorEmployerZipcode   String?
+  guarantorEmployerPhone     String?
+  guarantorOccupation        String?
+  guarantorTimeOnJob         String?
+  guarantorGrossAnnualIncome Float?
+
+  guarantorPreviousAddress         String?
+  guarantorPreviousCity            String?
+  guarantorPreviousState           String?
+  guarantorPreviousZipcode         String?
+  guarantorPreviousTimeOfResidence String?
+
+  guarantorResidencyType       ResidencyType?
+  guarantorRentMortgagePayment Float?
+  guarantorSignatureData       String?
+  guarantorResidency           String?
+  /**
+   * ---- Extra ----
+   */
+  salesperson                  String?
+  heardFrom                    String?
+
+  /**
+   * ---- Indexes ----
+   */
+  @@index([email])
+  @@index([status])
+  @@index([type])
+  @@index([submittedDate])
+  @@map("applications")
+}
+
+// model Application {
+//   id          String @id @default(auto()) @map("_id") @db.ObjectId
+//   referenceId String @unique
+
+//   // Application Type & Status
+//   type AccountType
+
+//   status        ApplicationStatus @default(PENDING)
+//   submittedDate DateTime          @default(now())
+//   updatedAt     DateTime          @updatedAt
+
+//   // === PERSONAL INFORMATION (Common for both types) ===
+//   firstName           String
+//   middleName          String?
+//   lastName            String
+//   address             String
+//   city                String
+//   state               String
+//   zipcode             String
+//   dayTimePhone        String
+//   email               String
+//   ssn                 String
+//   driverLicenseNumber String
+//   dateOfBirth         DateTime
+//   yearsOfResidence    String
+//   residencyType       ResidencyType @default(RENT)
+//   signatureData       String?
+
+//   // === EMPLOYMENT INFORMATION ===
+//   employerStatus    String // "Full-Time Student", "Part-Time", etc.
+//   employerName      String
+//   employerAddress   String
+//   employerCity      String
+//   employerState     String
+//   employerZipcode   String
+//   employerPhone     String
+//   occupation        String
+//   timeOnJob         String
+//   grossAnnualIncome Float
+//   otherIncome       Float?
+
+//   // === BUSINESS INFORMATION (Only for Business type) ===
+//   businessName          String?
+//   businessDbaNumber     String?
+//   businessEntity        String? // LLC, Corporation, etc.
+//   taxId                 String?
+//   businessIncorporation String?
+//   businessAddress       String?
+//   businessCity          String? // Fixed: Renamed from 'city'
+//   businessState         String?
+//   businessZipcode       String?
+//   businessPhone         String?
+//   businessEmail         String?
+//   yearsInBusiness       String?
+
+//   // === BUSINESS BANK INFO ===
+//   bankName           String?
+//   bankAccountNumber  String?
+//   bankPhone          String?
+//   bankRoutingNumber  String?
+//   bankBranchLocation String?
+//   bankState          String?
+
+//   // === GUARANTOR/CO-SIGNER INFO ===
+//   hasCoSigner         Boolean   @default(false)
+//   guarantorFirstName  String?
+//   guarantorMiddleName String?
+//   guarantorLastName   String?
+//   guarantorAddress    String?
+//   guarantorCity       String?
+//   guarantorState      String?
+//   guarantorZipcode    String?
+//   guarantorPhone      String?
+//   guarantorSsn        String?
+//   guarantorDob        DateTime?
+//   guarantorResidency  String? // "Rent", "Mortgage", "Owned"
+//   salesperson         String?
+//   heardFrom           String?
+
+//   // === INDEXES for Better Performance ===
+//   @@index([status])
+//   @@index([type])
+//   @@index([submittedDate])
+//   @@index([email])
+//   @@map("applications")
+// }
+
+// guarantorDriverLicense
+// guarantorEmail
+// guarantorEmployerAddress
+// guarantorEmployerCity
+// guarantorEmployerName
+// guarantorEmployerState
+// guarantorEmployerPhone
+// guarantorEmployerStatus
+// guarantorEmployerZipcode
+// guarantorGrossAnnualIncome
+// guarantorOccupation
+// guarantorPreviousAddress
+// guarantorPreviousCity
+// guarantorPreviousState
+// guarantorPreviousTimeOfResidence
+// guarantorPreviousZipcode
+// guarantorRentMortgagePayment
+// guarantorResidencyType
+// guarantorSignatureData
+// guarantorTimeOnJob
+// previousAddress
+// previousCity
+// previousState
+// previousTimeOfResidence
+// previousZipcode
+// rentMortgagePayment
+
+// bankAddress
+// bankCity
+// bankContact
+// bankZipcode
+// industry
