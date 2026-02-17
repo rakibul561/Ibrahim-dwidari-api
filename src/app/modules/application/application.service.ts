@@ -805,47 +805,60 @@ const generateApplicationPdf = async (id: string) => {
     addGroupSpacing();
 
     drawSectionHeader("Guarantor Information");
+
     drawTwoColumnFields(
-      "firstName",
+      "First Name",
       app.firstName || "N/A",
-      "middleName",
+      "Last Name",
       app.middleName || "N/A",
     );
+
     drawTwoColumnFields(
-      "city",
+      "City",
       app.city || "N/A",
-      "address",
+      "Address",
       app.address || "N/A",
     );
+
     drawTwoColumnFields(
-      "state",
+      "State",
       app.state || "N/A",
-      "zipcode",
+      "Zip Code",
       app.zipcode || "N/A",
     );
+
     drawTwoColumnFields(
-      "email",
+      "Email Address",
       app.email || "N/A",
-      "dayTimePhone",
+      "Daytime Phone",
       app.dayTimePhone || "N/A",
     );
+
     drawTwoColumnFields(
-      "driverLicenseNumber",
+      "Driver License Number",
       app.driverLicenseNumber || "N/A",
-      "ssn",
+      "SSN",
       app.ssn || "N/A",
     );
+
     drawTwoColumnFields(
-      "residencyType",
+      "Residency Type",
       app.residencyType || "N/A",
-      "yearsOfResidence",
+      "Years of Residence",
       app.yearsOfResidence || "N/A",
     );
+
     drawTwoColumnFields(
-      "rentMortgagePayment",
-      app.rentMortgagePayment || "N/A",
-      "dateOfBirth",
-      app.dateOfBirth || "N/A",
+      "Rent / Mortgage Payment",
+      app.rentMortgagePayment ? `$${app.rentMortgagePayment}` : "N/A",
+      "Date of Birth",
+      app.dateOfBirth
+        ? new Date(app.dateOfBirth).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+          })
+        : "N/A",
     );
 
     if (app.signatureData) {
