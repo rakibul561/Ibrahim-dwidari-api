@@ -787,8 +787,8 @@ const generateApplicationPdf = async (id: string) => {
     doc.y = bankNameY + FIELD_HEIGHT;
 
     drawTwoColumnFields(
-      "Routing Number",
-      app.bankRoutingNumber || "N/A",
+      "bankAddress",
+      app.bankAddress || "N/A",
       "Phone",
       app.bankPhone || "N/A",
     );
@@ -796,8 +796,8 @@ const generateApplicationPdf = async (id: string) => {
     // branch loaction
 
     drawTwoColumnFields(
-      "Branch Location",
-      app.bankBranchLocation || "N/A",
+      "bankCity",
+      app.bankCity || "N/A",
       "State",
       app.bankState || "N/A",
     );
