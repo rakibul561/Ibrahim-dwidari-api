@@ -793,6 +793,8 @@ const generateApplicationPdf = async (id: string) => {
       app.bankPhone || "N/A",
     );
 
+    // branch loaction
+
     drawTwoColumnFields(
       "Branch Location",
       app.bankBranchLocation || "N/A",
