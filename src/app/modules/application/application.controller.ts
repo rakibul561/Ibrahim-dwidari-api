@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
+import httpStatus from "http-status";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { ApplicationService } from "./application.service";
-import httpStatus from "http-status";
 
 const createPersonalApplication = catchAsync(
   async (req: Request, res: Response) => {
@@ -13,12 +13,11 @@ const createPersonalApplication = catchAsync(
       message: "Personal application created successfully",
       data: result,
     });
-  }
+  },
 );
 
 const createBusinessApplication = catchAsync(
   async (req: Request, res: Response) => {
-
     const result = await ApplicationService.createBusinessApplication(req.body);
 
     sendResponse(res, {
@@ -27,7 +26,7 @@ const createBusinessApplication = catchAsync(
       message: "Business application created successfully",
       data: result,
     });
-  }
+  },
 );
 
 const getAllAplication = catchAsync(async (req: Request, res: Response) => {
@@ -50,16 +49,15 @@ const getSingleApplication = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getSingleApplication2 = catchAsync(async (req: Request, res: Response) => {
-  const result = await ApplicationService.getSingleApplication2(req.params.id);
-  sendResponse(res, {
-    statusCode: 201,
-    success: true,
-    message: "Single application retrieved successfully",
-    data: result,
-  });
-});
-
+// const getSingleApplication2 = catchAsync(async (req: Request, res: Response) => {
+//   const result = await ApplicationService.getSingleApplication2(req.params.id);
+//   sendResponse(res, {
+//     statusCode: 201,
+//     success: true,
+//     message: "Single application retrieved successfully",
+//     data: result,
+//   });
+// });
 
 const getOverview = catchAsync(async (req, res) => {
   const result = await ApplicationService.getApplicationOverview();
@@ -75,10 +73,7 @@ const getOverview = catchAsync(async (req, res) => {
 const updateStatus = catchAsync(async (req, res) => {
   const { id } = req.params;
 
-  const result = await ApplicationService.updateApplicationStatus(
-    id,
-    req.body
-  );
+  const result = await ApplicationService.updateApplicationStatus(id, req.body);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -92,22 +87,19 @@ const updateStatus = catchAsync(async (req, res) => {
   });
 });
 
-const downloadApplication = catchAsync(
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
+const downloadApplication = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-    const pdfBuffer = await ApplicationService.generateApplicationPdf(id);
+  const pdfBuffer = await ApplicationService.generateApplicationPdf(id);
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=application-${id}.pdf`
-    );
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=application-${id}.pdf`,
+  );
 
-    res.status(httpStatus.OK).send(pdfBuffer);
-  }
-);
-
+  res.status(httpStatus.OK).send(pdfBuffer);
+});
 
 const updateApplication = catchAsync(async (req, res) => {
   const { id } = req.params;
@@ -120,8 +112,6 @@ const updateApplication = catchAsync(async (req, res) => {
   });
 });
 
-
-
 export const ApplicationController = {
   createPersonalApplication,
   createBusinessApplication,
@@ -131,5 +121,5 @@ export const ApplicationController = {
   updateStatus,
   downloadApplication,
   updateApplication,
-  getSingleApplication2
+  // getSingleApplication2,
 };

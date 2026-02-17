@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -188,6 +189,158 @@ const getAllAplication = async (query: Record<string, any>) => {
   };
 };
 
+// const getSingleApplication = async (id: string) => {
+//   const app = await prisma.application.findUnique({
+//     where: { id },
+//   });
+
+//   if (!app) {
+//     throw new ApiError(httpStatus.NOT_FOUND, "Application not found");
+//   }
+
+//   //  PERSONAL APPLICATION
+//   if (app.type === "PERSONAL") {
+//     return {
+//       id: app.id,
+//       referenceId: app.referenceId,
+//       type: app.type,
+//       status: app.status,
+//       submittedDate: app.submittedDate,
+//       updatedAt: app.updatedAt,
+
+//       personalInfo: {
+//         firstName: app.firstName,
+//         middleName: app.middleName,
+//         lastName: app.lastName,
+//         email: app.email,
+//         phone: app.dayTimePhone,
+//         dateOfBirth: app.dateOfBirth,
+//         ssn: app.ssn,
+//         driverLicenseNumber: app.driverLicenseNumber,
+//         signature: app.signatureData,
+
+//         address: {
+//           address: app.address,
+//           city: app.city,
+//           state: app.state,
+//           zipcode: app.zipcode,
+//         },
+
+//         residency: {
+//           type: app.residencyType,
+//           years: app.yearsOfResidence,
+//         },
+//       },
+
+//       employmentInfo: {
+//         status: app.employerStatus,
+//         employerName: app.employerName,
+//         employerAddress: app.employerAddress,
+//         employerCity: app.employerCity,
+//         employerState: app.employerState,
+//         employerZipcode: app.employerZipcode,
+//         employerPhone: app.employerPhone,
+//         occupation: app.occupation,
+//         timeOnJob: app.timeOnJob,
+//         grossAnnualIncome: app.grossAnnualIncome,
+//         otherIncome: app.otherIncome,
+//       },
+//     };
+//   }
+
+//   //  BUSINESS APPLICATION
+//   if (app.type === "BUSINESS") {
+//     return {
+//       id: app.id,
+//       referenceId: app.referenceId,
+//       type: app.type,
+//       status: app.status,
+//       submittedDate: app.submittedDate,
+//       updatedAt: app.updatedAt,
+
+//       ownerInfo: {
+//         firstName: app.firstName,
+//         middleName: app.middleName,
+//         lastName: app.lastName,
+//         email: app.email,
+//         phone: app.dayTimePhone,
+//         dateOfBirth: app.dateOfBirth,
+//         ssn: app.ssn,
+//         driverLicenseNumber: app.driverLicenseNumber,
+//       },
+
+//       businessInfo: {
+//         businessName: app.businessName,
+//         dbaNumber: app.businessDbaNumber,
+//         entityType: app.businessEntity,
+//         taxId: app.taxId,
+//         incorporation: app.businessIncorporation,
+//         yearsInBusiness: app.yearsInBusiness,
+
+//         address: {
+//           address: app.businessAddress,
+//           city: app.businessCity,
+//           state: app.businessState,
+//           zipcode: app.businessZipcode,
+//         },
+
+//         contact: {
+//           phone: app.businessPhone,
+//           email: app.businessEmail,
+//         },
+//       },
+
+//       bankInfo: {
+//         bankName: app.bankName,
+//         accountNumber: app.bankAccountNumber,
+//         routingNumber: app.bankRoutingNumber,
+//         phone: app.bankPhone,
+//         branchLocation: app.bankBranchLocation,
+//         state: app.bankState,
+//       },
+
+//       guarantor: app.hasCoSigner
+//         ? {
+//             firstName: app.guarantorFirstName,
+//             middleName: app.guarantorMiddleName,
+//             lastName: app.guarantorLastName,
+//             phone: app.guarantorPhone,
+//             ssn: app.guarantorSsn,
+//             dateOfBirth: app.guarantorDob,
+
+//             address: {
+//               address: app.guarantorAddress,
+//               city: app.guarantorCity,
+//               state: app.guarantorState,
+//               zipcode: app.guarantorZipcode,
+//             },
+
+//             residency: app.guarantorResidencyType,
+//           }
+//         : null,
+//     };
+//   }
+
+//   return null;
+// };
+const removeNullUndefined = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj
+      .map(removeNullUndefined)
+      .filter((v) => v !== null && v !== undefined);
+  }
+
+  if (typeof obj === "object" && obj !== null) {
+    return Object.fromEntries(
+      Object.entries(obj)
+        .map(([key, value]) => [key, removeNullUndefined(value)])
+        .filter(([_, value]) => value !== null && value !== undefined),
+    );
+  }
+
+  return obj;
+};
+
 const getSingleApplication = async (id: string) => {
   const app = await prisma.application.findUnique({
     where: { id },
@@ -197,143 +350,246 @@ const getSingleApplication = async (id: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Application not found");
   }
 
-  //  PERSONAL APPLICATION
-  if (app.type === "PERSONAL") {
-    return {
-      id: app.id,
-      referenceId: app.referenceId,
-      type: app.type,
-      status: app.status,
-      submittedDate: app.submittedDate,
-      updatedAt: app.updatedAt,
+  // ======================
+  // BASE RESPONSE
+  // ======================
 
-      personalInfo: {
-        firstName: app.firstName,
-        middleName: app.middleName,
-        lastName: app.lastName,
+  let response: any = {
+    id: app.id,
+    referenceId: app.referenceId,
+    type: app.type,
+    status: app.status,
+    submittedDate: app.submittedDate,
+    updatedAt: app.updatedAt,
+  };
+
+  // =====================================================
+  // PERSONAL APPLICATION
+  // =====================================================
+
+  if (app.type === "PERSONAL") {
+    response.personalInfo = {
+      firstName: app.firstName,
+      middleName: app.middleName,
+      lastName: app.lastName,
+
+      contact: {
         email: app.email,
         phone: app.dayTimePhone,
-        dateOfBirth: app.dateOfBirth,
+      },
+
+      identity: {
+        dateOfBirth: app.dateOfBirth?.toISOString(),
         ssn: app.ssn,
         driverLicenseNumber: app.driverLicenseNumber,
         signature: app.signatureData,
-
-        address: {
-          address: app.address,
-          city: app.city,
-          state: app.state,
-          zipcode: app.zipcode,
-        },
-
-        residency: {
-          type: app.residencyType,
-          years: app.yearsOfResidence,
-        },
       },
 
-      employmentInfo: {
-        status: app.employerStatus,
-        employerName: app.employerName,
-        employerAddress: app.employerAddress,
-        employerCity: app.employerCity,
-        employerState: app.employerState,
-        employerZipcode: app.employerZipcode,
-        employerPhone: app.employerPhone,
-        occupation: app.occupation,
-        timeOnJob: app.timeOnJob,
+      address: {
+        address: app.address,
+        city: app.city,
+        state: app.state,
+        zipcode: app.zipcode,
+      },
+
+      residency: {
+        type: app.residencyType,
+        yearsOfResidence: app.yearsOfResidence,
+        rentMortgagePayment: app.rentMortgagePayment,
+      },
+
+      previousResidence: {
+        address: app.previousAddress,
+        city: app.previousCity,
+        state: app.previousState,
+        zipcode: app.previousZipcode,
+        yearsOfResidence: app.previousTimeOfResidence,
+      },
+    };
+
+    response.employmentInfo = {
+      status: app.employerStatus,
+      occupation: app.occupation,
+      industry: app.industry,
+
+      employer: {
+        name: app.employerName,
+        address: app.employerAddress,
+        city: app.employerCity,
+        state: app.employerState,
+        zipcode: app.employerZipcode,
+        phone: app.employerPhone,
+      },
+
+      previousEmployer: {
+        name: app.previousEmployerName,
+        phone: app.previousEmployerPhone,
+        timeOnJob: app.previousTimeOnJob,
+      },
+
+      income: {
         grossAnnualIncome: app.grossAnnualIncome,
         otherIncome: app.otherIncome,
       },
+
+      timeOnJob: app.timeOnJob,
     };
+
+    // ======================
+    // GUARANTOR
+    // ======================
+
+    if (app.hasCoSigner) {
+      response.guarantorInfo = {
+        firstName: app.guarantorFirstName,
+        middleName: app.guarantorMiddleName,
+        lastName: app.guarantorLastName,
+
+        contact: {
+          phone: app.guarantorPhone,
+          email: app.guarantorEmail,
+        },
+
+        identity: {
+          ssn: app.guarantorSsn,
+          driverLicense: app.guarantorDriverLicense,
+          dateOfBirth: app.guarantorDob?.toISOString(),
+
+          signature: app.guarantorSignatureData,
+        },
+
+        address: {
+          address: app.guarantorAddress,
+          city: app.guarantorCity,
+          state: app.guarantorState,
+          zipcode: app.guarantorZipcode,
+        },
+
+        residency: {
+          type: app.guarantorResidencyType,
+          rentMortgagePayment: app.guarantorRentMortgagePayment,
+          yearsOfResidence: app.guarantorResidency,
+        },
+
+        employment: {
+          status: app.guarantorEmployerStatus,
+          employerName: app.guarantorEmployerName,
+          employerAddress: app.guarantorEmployerAddress,
+          employerCity: app.guarantorEmployerCity,
+          employerState: app.guarantorEmployerState,
+          employerZipcode: app.guarantorEmployerZipcode,
+          employerPhone: app.guarantorEmployerPhone,
+          occupation: app.guarantorOccupation,
+          timeOnJob: app.guarantorTimeOnJob,
+          grossAnnualIncome: app.guarantorGrossAnnualIncome,
+        },
+
+        previousResidence: {
+          address: app.guarantorPreviousAddress,
+          city: app.guarantorPreviousCity,
+          state: app.guarantorPreviousState,
+          zipcode: app.guarantorPreviousZipcode,
+          yearsOfResidence: app.guarantorPreviousTimeOfResidence,
+        },
+      };
+    }
   }
 
-  //  BUSINESS APPLICATION
-  if (app.type === "BUSINESS") {
-    return {
-      id: app.id,
-      referenceId: app.referenceId,
-      type: app.type,
-      status: app.status,
-      submittedDate: app.submittedDate,
-      updatedAt: app.updatedAt,
+  // =====================================================
+  // BUSINESS APPLICATION
+  // =====================================================
 
-      ownerInfo: {
-        firstName: app.firstName,
-        middleName: app.middleName,
-        lastName: app.lastName,
+  if (app.type === "BUSINESS") {
+    response.ownerInfo = {
+      firstName: app.firstName,
+      middleName: app.middleName,
+      lastName: app.lastName,
+
+      contact: {
         email: app.email,
         phone: app.dayTimePhone,
-        dateOfBirth: app.dateOfBirth,
+      },
+
+      identity: {
+        dateOfBirth: app.dateOfBirth?.toISOString(),
         ssn: app.ssn,
         driverLicenseNumber: app.driverLicenseNumber,
       },
-
-      businessInfo: {
-        businessName: app.businessName,
-        dbaNumber: app.businessDbaNumber,
-        entityType: app.businessEntity,
-        taxId: app.taxId,
-        incorporation: app.businessIncorporation,
-        yearsInBusiness: app.yearsInBusiness,
-
-        address: {
-          address: app.businessAddress,
-          city: app.businessCity,
-          state: app.businessState,
-          zipcode: app.businessZipcode,
-        },
-
-        contact: {
-          phone: app.businessPhone,
-          email: app.businessEmail,
-        },
-      },
-
-      bankInfo: {
-        bankName: app.bankName,
-        accountNumber: app.bankAccountNumber,
-        routingNumber: app.bankRoutingNumber,
-        phone: app.bankPhone,
-        branchLocation: app.bankBranchLocation,
-        state: app.bankState,
-      },
-
-      guarantor: app.hasCoSigner
-        ? {
-            firstName: app.guarantorFirstName,
-            middleName: app.guarantorMiddleName,
-            lastName: app.guarantorLastName,
-            phone: app.guarantorPhone,
-            ssn: app.guarantorSsn,
-            dateOfBirth: app.guarantorDob,
-
-            address: {
-              address: app.guarantorAddress,
-              city: app.guarantorCity,
-              state: app.guarantorState,
-              zipcode: app.guarantorZipcode,
-            },
-
-            residency: app.guarantorResidencyType,
-          }
-        : null,
     };
+
+    response.businessInfo = {
+      businessName: app.businessName,
+      dbaNumber: app.businessDbaNumber,
+      entityType: app.businessEntity,
+      taxId: app.taxId,
+      incorporation: app.businessIncorporation,
+      yearEstablished: app.yearEstablished,
+      yearsInBusiness: app.yearsInBusiness,
+
+      address: {
+        address: app.businessAddress,
+        city: app.businessCity,
+        state: app.businessState,
+        zipcode: app.businessZipcode,
+      },
+
+      contact: {
+        phone: app.businessPhone,
+        email: app.businessEmail,
+      },
+    };
+
+    response.bankInfo = {
+      bankName: app.bankName,
+      accountNumber: app.bankAccountNumber,
+      routingNumber: app.bankRoutingNumber,
+
+      address: {
+        address: app.bankAddress,
+        city: app.bankCity,
+        state: app.bankState,
+        zipcode: app.bankZipcode,
+      },
+
+      contact: {
+        phone: app.bankPhone,
+        contactPerson: app.bankContact,
+      },
+
+      branchLocation: app.bankBranchLocation,
+    };
+
+    if (app.hasCoSigner) {
+      response.guarantorInfo = {
+        firstName: app.guarantorFirstName,
+        middleName: app.guarantorMiddleName,
+        lastName: app.guarantorLastName,
+        phone: app.guarantorPhone,
+        email: app.guarantorEmail,
+        ssn: app.guarantorSsn,
+        dateOfBirth: app.guarantorDob?.toISOString(),
+      };
+    }
   }
 
-  return null;
+  // ======================
+  // FINAL CLEAN RESPONSE
+  // ======================
+
+  return removeNullUndefined(response);
 };
 
-const getSingleApplication2 = async (id: string) => {
-  const app = await prisma.application.findUnique({
-    where: { id },
-  });
+// const getSingleApplication2 = async (id: string) => {
+//   const app = await prisma.application.findUnique({
+//     where: { id },
+//   });
 
-  if (!app) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Application not found");
-  }
+//   if (!app) {
+//     throw new ApiError(httpStatus.NOT_FOUND, "Application not found");
+//   }
 
-  return app;
-};
+//   return app;
+// };
 
 const getApplicationOverview = async () => {
   const todayStart = new Date();
@@ -1183,5 +1439,5 @@ export const ApplicationService = {
   updateApplicationStatus,
   generateApplicationPdf,
   updateApplication,
-  getSingleApplication2,
+  // getSingleApplication2,
 };
