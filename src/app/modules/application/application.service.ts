@@ -725,8 +725,8 @@ const generateApplicationPdf = async (id: string) => {
     drawTwoColumnFields(
       "Incorporation",
       app.businessIncorporation || "N/A",
-      "Years in Business",
-      app.yearsInBusiness != null ? String(app.yearsInBusiness) : "N/A",
+      "yearEstablished",
+      app.yearEstablished != null ? String(app.yearEstablished) : "N/A",
     );
 
     drawTwoColumnFields(
