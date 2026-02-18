@@ -68,6 +68,8 @@ const getAllAplication = async (query: Record<string, any>) => {
     ...prismaQuery,
   });
 
+  console.log(applications);
+
   const total = await prisma.application.count({
     where: prismaQuery.where,
   });
@@ -516,6 +518,7 @@ const getSingleApplication = async (id: string) => {
         dateOfBirth: app.dateOfBirth?.toISOString(),
         ssn: app.ssn,
         driverLicenseNumber: app.driverLicenseNumber,
+        signature: app.signatureData,
       },
     };
 
