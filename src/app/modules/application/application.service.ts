@@ -346,6 +346,8 @@ const getSingleApplication = async (id: string) => {
     where: { id },
   });
 
+  console.log(app);
+
   if (!app) {
     throw new ApiError(httpStatus.NOT_FOUND, "Application not found");
   }
@@ -359,8 +361,8 @@ const getSingleApplication = async (id: string) => {
     referenceId: app.referenceId,
     type: app.type,
     status: app.status,
-    submittedDate: app.submittedDate,
-    updatedAt: app.updatedAt,
+    submittedDate: app.submittedDate?.toISOString(),
+    updatedAt: app.updatedAt?.toISOString(),
   };
 
   // =====================================================
