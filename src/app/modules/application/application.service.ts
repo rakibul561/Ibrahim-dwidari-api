@@ -913,7 +913,7 @@ const generateApplicationPdf = async (id: string) => {
 
     drawTwoColumnFields(
       "SSN",
-      app.ssn ? "***-**-" + String(app.ssn).slice(-4) : "N/A",
+      app.ssn ? +String(app.ssn) : "N/A",
       "Driver License",
       app.driverLicenseNumber || "N/A",
     );
@@ -1173,7 +1173,7 @@ const generateApplicationPdf = async (id: string) => {
 
     drawTwoColumnFields(
       "SSN",
-      app.ssn ? "***-**-" + String(app.ssn).slice(-4) : "N/A",
+      app.ssn ? +String(app.ssn) : "N/A",
       "Driver License",
       app.driverLicenseNumber,
     );
@@ -1284,9 +1284,7 @@ const generateApplicationPdf = async (id: string) => {
         .join(" ")
         .trim() || "N/A";
 
-    const maskedCoSSN = app.guarantorSsn
-      ? "***-**-" + String(app.guarantorSsn).slice(-4)
-      : "N/A";
+    const maskedCoSSN = app.guarantorSsn ? +String(app.guarantorSsn) : "N/A";
 
     const coDobText = app.guarantorDob
       ? new Date(app.guarantorDob).toLocaleDateString("en-US", {
