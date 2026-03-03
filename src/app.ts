@@ -34,7 +34,7 @@ app.use(cookieParser());
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
-    message: "Welcome to restaurant API",
+    message: "Welcome to restaurant API!!!",
   });
 });
 
