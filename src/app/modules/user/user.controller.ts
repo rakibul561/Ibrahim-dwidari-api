@@ -14,6 +14,7 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
     })
 });
 
+
 // New: Get current authenticated user
 const getSingleUser = catchAsync(async (req: Request & { user?: any }, res: Response) => {
 

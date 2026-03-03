@@ -3,6 +3,7 @@ import httpStatus from "http-status";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { ApplicationService } from "./application.service";
+import { v4 as uuidv4 } from "uuid";
 
 const createPersonalApplication = catchAsync(
   async (req: Request, res: Response) => {
@@ -15,6 +16,52 @@ const createPersonalApplication = catchAsync(
     });
   },
 );
+
+const exportAllApplications = catchAsync(async (req: Request, res: Response) => {
+    const resultCsvFile = await ApplicationService.exportAllApplications();
+
+    const downloadId: string =  uuidv4().slice(0, 16).replace(/-/g, '');
+    
+    res.header("Content-Type", "text/csv");
+    res.header("Content-Disposition", `attachment; filename=applications_${downloadId}.csv`);
+    
+    res.status(httpStatus.CREATED).send(resultCsvFile);
+});
+
+
+// const uploadCSV = catchAsync(async (req: Request, res: Response) => {
+
+
+
+//     console.log("\n\n req.file ==> \n\n", req.file)
+//     console.log("\n\n____ end ___ ==> \n\n")
+
+
+//     sendResponse(res, {
+//       statusCode: 201,
+//       success: true,
+//       message: "Business applications created successfully",
+//       data: "",
+//     });
+// });
+const uploadCSV = catchAsync(async (req: Request, res: Response) => {
+  if (!req.file) {
+    return sendResponse(res, {
+      statusCode: 400,
+      success: false,
+      message: "No file uploaded",
+    });
+  }
+
+  const result = await ApplicationService.uploadCSV(req.file);
+
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: `${result.total} applications created successfully`,
+    data: result.applications,
+  });
+});
 
 const createBusinessApplication = catchAsync(
   async (req: Request, res: Response) => {
@@ -113,6 +160,8 @@ const updateApplication = catchAsync(async (req, res) => {
 });
 
 export const ApplicationController = {
+  uploadCSV,
+  exportAllApplications,
   createPersonalApplication,
   createBusinessApplication,
   getAllAplication,

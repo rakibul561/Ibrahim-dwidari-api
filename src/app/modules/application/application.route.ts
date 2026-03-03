@@ -2,8 +2,19 @@ import express from "express";
 import validateRequest from "../../middlewares/valideteRequest";
 import { ApplicationController } from "./application.controller";
 import { applicationValidation } from "./application.validatation";
+import { csvFileUpload } from "../../utils/ProcessCsv";
+// import { Role } from "@prisma/client";
+// import auth from "../../middlewares/auth";
 
 const router = express.Router();
+// , auth(Role.ADMIN)
+router.get("/exports", ApplicationController.exportAllApplications);
+
+router.post(
+  "/uploads-csv",
+  csvFileUpload.upload.single("file"), // Multer middleware must come first
+  ApplicationController.uploadCSV
+);
 
 router.get("/", ApplicationController.getAllAplication);
 router.get("/overview", ApplicationController.getOverview);

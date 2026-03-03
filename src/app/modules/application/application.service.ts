@@ -11,6 +11,9 @@ import ApiError from "../../errors/apiError";
 import prisma from "../../prisma/prisma";
 import { base64ToBuffer } from "../../utils/base64ToBuffer";
 import { PrismaQueryBuilder } from "../../utils/QueryBuilder";
+import { Parser } from "json2csv";
+import { parseCSVBuffer } from "../../utils/parseCSV";
+import {  ResidencyType } from "@prisma/client";
 
 const createPersonalApplication = async (payload: any) => {
   const result = await prisma.application.create({
@@ -22,6 +25,375 @@ const createPersonalApplication = async (payload: any) => {
   });
 
   return result;
+};
+
+const exportAllApplications = async () => {
+    // 1. Fetch all applications
+  const applications = await prisma.application.findMany();
+
+  // 2. Define CSV fields (adjust according to your model)
+  const fields = [
+    "id",
+    "referenceId",
+    "type",
+    "status",
+    "submittedDate",
+    "updatedAt",
+    "firstName",
+    "middleName",
+    "lastName",
+    "address",
+    "city",
+    "state",
+    "zipcode",
+    "dayTimePhone",
+    "email",
+    "ssn",
+    "driverLicenseNumber",
+    "dateOfBirth",
+    "yearsOfResidence",
+    "residencyType",
+    "rentMortgagePayment",
+    "previousAddress",
+    "previousCity",
+    "previousState",
+    "previousZipcode",
+    "previousTimeOfResidence",
+    "guarantorPreviousTimeOnJob",
+    "guarantorPreviousEmployerPhone",
+    "guarantorPreviousEmployerName",
+    "previousEmployerPhone",
+    "previousEmployerName",
+    "previousTimeOnJob",
+    "signatureData",
+    "occupation",
+    "industry",
+    "employerStatus",
+    "employerName",
+    "employerAddress",
+    "employerCity",
+    "employerState",
+    "employerZipcode",
+    "employerPhone",
+    "timeOnJob",
+    "grossAnnualIncome",
+    "otherIncome",
+    "businessName",
+    "businessDbaNumber",
+    "businessEntity",
+    "taxId",
+    "businessIncorporation",
+    "yearEstablished",
+    "businessAddress",
+    "businessCity",
+    "businessState",
+    "businessZipcode",
+    "businessPhone",
+    "businessEmail",
+    "yearsInBusiness",
+    "bankName",
+    "bankAccountNumber",
+    "bankAddress",
+    "bankCity",
+    "bankState",
+    "bankZipcode",
+    "bankPhone",
+    "bankContact",
+    "bankRoutingNumber",
+    "bankBranchLocation",
+    "hasCoSigner",
+    "guarantorFirstName",
+    "guarantorMiddleName",
+    "guarantorLastName",
+    "guarantorAddress",
+    "guarantorCity",
+    "guarantorState",
+    "guarantorZipcode",
+    "guarantorPhone",
+    "guarantorEmail",
+    "guarantorSsn",
+    "guarantorDriverLicense",
+    "guarantorDob",
+    "guarantorEmployerName",
+    "guarantorEmployerStatus",
+    "guarantorEmployerAddress",
+    "guarantorEmployerCity",
+    "guarantorEmployerState",
+    "guarantorEmployerZipcode",
+    "guarantorEmployerPhone",
+    "guarantorOccupation",
+    "guarantorTimeOnJob",
+    "guarantorGrossAnnualIncome",
+    "guarantorPreviousAddress",
+    "guarantorPreviousCity",
+    "guarantorPreviousState",
+    "guarantorPreviousZipcode",
+    "guarantorPreviousTimeOfResidence",
+    "guarantorResidencyType",
+    "guarantorRentMortgagePayment",
+    "guarantorSignatureData",
+    "guarantorResidency",
+    "salesperson",
+    "heardFrom",
+  ];
+
+  const opts = { fields };
+
+  // 3. Convert JSON to CSV
+  const parser = new Parser(opts);
+  const csv = parser.parse(applications);
+
+  return csv;
+};
+
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+const toStr = (val: string) => (val?.trim() === "" ? undefined : val.trim());
+const toFloat = (val: string) => (val?.trim() === "" ? undefined : parseFloat(val));
+const toBool = (val: string) => val?.trim().toLowerCase() === "true";
+const toDate = (val: string) => (val?.trim() === "" ? undefined : new Date(val.trim()));
+
+const toResidency = (val: string): ResidencyType | undefined => {
+  const map: Record<string, ResidencyType> = {
+    RENT: ResidencyType.RENT,
+    MORTGAGE: ResidencyType.MORTGAGE,
+    OWNED: ResidencyType.OWNED,
+  };
+  return map[val?.trim().toUpperCase()];
+};
+
+const toAccountType = (val: string): AccountType => {
+  return val?.trim().toUpperCase() === "BUSINESS"
+    ? AccountType.BUSINESS
+    : AccountType.PERSONAL;
+};
+
+// ─── Required Fields ───────────────────────────────────────────────────────────
+const REQUIRED_FIELDS = [
+  "type",
+  "firstName",
+  "lastName",
+  "address",
+  "city",
+  "state",
+  "zipcode",
+  "dayTimePhone",
+  "email",
+  "ssn",
+  "driverLicenseNumber",
+  "dateOfBirth",
+  "yearsOfResidence",
+  "residencyType",
+  "grossAnnualIncome",
+];
+
+// ─── Row Validator ─────────────────────────────────────────────────────────────
+const validateRow = (row: Record<string, string>, rowIndex: number) => {
+  // Check missing required fields
+  const missingFields = REQUIRED_FIELDS.filter(
+    (field) => !row[field] || row[field].trim() === ""
+  );
+  if (missingFields.length > 0) {
+    throw new ApiError(
+      400,
+      `Row ${rowIndex + 1}: Missing required fields — ${missingFields.join(", ")}`
+    );
+  }
+
+  // Validate type enum
+  if (!["PERSONAL", "BUSINESS"].includes(row.type?.trim().toUpperCase())) {
+    throw new ApiError(
+      400,
+      `Row ${rowIndex + 1}: Invalid type "${row.type}" — must be PERSONAL or BUSINESS`
+    );
+  }
+
+  // Validate residencyType enum
+  if (!["RENT", "MORTGAGE", "OWNED"].includes(row.residencyType?.trim().toUpperCase())) {
+    throw new ApiError(
+      400,
+      `Row ${rowIndex + 1}: Invalid residencyType "${row.residencyType}" — must be RENT, MORTGAGE, or OWNED`
+    );
+  }
+
+  // Validate dateOfBirth
+  if (isNaN(new Date(row.dateOfBirth).getTime())) {
+    throw new ApiError(
+      400,
+      `Row ${rowIndex + 1}: Invalid dateOfBirth "${row.dateOfBirth}" — must be a valid date (YYYY-MM-DD)`
+    );
+  }
+
+  // Validate grossAnnualIncome
+  if (isNaN(parseFloat(row.grossAnnualIncome))) {
+    throw new ApiError(
+      400,
+      `Row ${rowIndex + 1}: Invalid grossAnnualIncome "${row.grossAnnualIncome}" — must be a number`
+    );
+  }
+
+  // Validate guarantorDob if provided
+  if (row.guarantorDob?.trim() && isNaN(new Date(row.guarantorDob).getTime())) {
+    throw new ApiError(
+      400,
+      `Row ${rowIndex + 1}: Invalid guarantorDob "${row.guarantorDob}" — must be a valid date (YYYY-MM-DD)`
+    );
+  }
+
+  // Validate guarantorResidencyType if provided
+  if (
+    row.guarantorResidencyType?.trim() &&
+    !["RENT", "MORTGAGE", "OWNED"].includes(row.guarantorResidencyType.trim().toUpperCase())
+  ) {
+    throw new ApiError(
+      400,
+      `Row ${rowIndex + 1}: Invalid guarantorResidencyType "${row.guarantorResidencyType}" — must be RENT, MORTGAGE, or OWNED`
+    );
+  }
+};
+
+// ─── Main Service ──────────────────────────────────────────────────────────────
+const uploadCSV = async (file: Express.Multer.File) => {
+  // Step 1: Parse CSV buffer
+  const rows = await parseCSVBuffer<Record<string, string>>(file.buffer);
+
+  if (!rows.length) {
+    throw new ApiError(400, "CSV file is empty");
+  }
+
+  // Step 2: Validate ALL rows before touching the DB
+  rows.forEach((row, index) => validateRow(row, index));
+
+  // Step 3: Map rows to application data
+  const applicationsData = rows.map((row) => ({
+    referenceId: uuidv4(),
+    type: toAccountType(row.type),
+
+    // Personal Info
+    firstName: row.firstName,
+    middleName: toStr(row.middleName),
+    lastName: row.lastName,
+    address: row.address,
+    city: row.city,
+    state: row.state,
+    zipcode: row.zipcode,
+    dayTimePhone: row.dayTimePhone,
+    email: row.email,
+    ssn: row.ssn,
+    driverLicenseNumber: row.driverLicenseNumber,
+    dateOfBirth: new Date(row.dateOfBirth),
+    yearsOfResidence: row.yearsOfResidence,
+    residencyType: toResidency(row.residencyType) ?? ResidencyType.RENT,
+    rentMortgagePayment: toFloat(row.rentMortgagePayment),
+    previousAddress: toStr(row.previousAddress),
+    previousCity: toStr(row.previousCity),
+    previousState: toStr(row.previousState),
+    previousZipcode: toStr(row.previousZipcode),
+    previousTimeOfResidence: toStr(row.previousTimeOfResidence),
+    previousEmployerName: toStr(row.previousEmployerName),
+    previousEmployerPhone: toStr(row.previousEmployerPhone),
+    previousTimeOnJob: toStr(row.previousTimeOnJob),
+    signatureData: toStr(row.signatureData),
+
+    // Employment / Income
+    occupation: toStr(row.occupation),
+    industry: toStr(row.industry),
+    employerStatus: toStr(row.employerStatus),
+    employerName: toStr(row.employerName),
+    employerAddress: toStr(row.employerAddress),
+    employerCity: toStr(row.employerCity),
+    employerState: toStr(row.employerState),
+    employerZipcode: toStr(row.employerZipcode),
+    employerPhone: toStr(row.employerPhone),
+    timeOnJob: toStr(row.timeOnJob),
+    grossAnnualIncome: toFloat(row.grossAnnualIncome) ?? 0,
+    otherIncome: toFloat(row.otherIncome),
+
+    // Business Info
+    businessName: toStr(row.businessName),
+    businessDbaNumber: toStr(row.businessDbaNumber),
+    businessEntity: toStr(row.businessEntity),
+    taxId: toStr(row.taxId),
+    businessIncorporation: toStr(row.businessIncorporation),
+    yearEstablished: toStr(row.yearEstablished),
+    businessAddress: toStr(row.businessAddress),
+    businessCity: toStr(row.businessCity),
+    businessState: toStr(row.businessState),
+    businessZipcode: toStr(row.businessZipcode),
+    businessPhone: toStr(row.businessPhone),
+    businessEmail: toStr(row.businessEmail),
+    yearsInBusiness: toStr(row.yearsInBusiness),
+
+    // Bank Info
+    bankName: toStr(row.bankName),
+    bankAccountNumber: toStr(row.bankAccountNumber),
+    bankAddress: toStr(row.bankAddress),
+    bankCity: toStr(row.bankCity),
+    bankState: toStr(row.bankState),
+    bankZipcode: toStr(row.bankZipcode),
+    bankPhone: toStr(row.bankPhone),
+    bankContact: toStr(row.bankContact),
+    bankRoutingNumber: toStr(row.bankRoutingNumber),
+    bankBranchLocation: toStr(row.bankBranchLocation),
+
+    // Guarantor
+    hasCoSigner: toBool(row.hasCoSigner),
+    guarantorFirstName: toStr(row.guarantorFirstName),
+    guarantorMiddleName: toStr(row.guarantorMiddleName),
+    guarantorLastName: toStr(row.guarantorLastName),
+    guarantorAddress: toStr(row.guarantorAddress),
+    guarantorCity: toStr(row.guarantorCity),
+    guarantorState: toStr(row.guarantorState),
+    guarantorZipcode: toStr(row.guarantorZipcode),
+    guarantorPhone: toStr(row.guarantorPhone),
+    guarantorEmail: toStr(row.guarantorEmail),
+    guarantorSsn: toStr(row.guarantorSsn),
+    guarantorDriverLicense: toStr(row.guarantorDriverLicense),
+    guarantorDob: toDate(row.guarantorDob),
+    guarantorEmployerName: toStr(row.guarantorEmployerName),
+    guarantorEmployerStatus: toStr(row.guarantorEmployerStatus),
+    guarantorEmployerAddress: toStr(row.guarantorEmployerAddress),
+    guarantorEmployerCity: toStr(row.guarantorEmployerCity),
+    guarantorEmployerState: toStr(row.guarantorEmployerState),
+    guarantorEmployerZipcode: toStr(row.guarantorEmployerZipcode),
+    guarantorEmployerPhone: toStr(row.guarantorEmployerPhone),
+    guarantorOccupation: toStr(row.guarantorOccupation),
+    guarantorTimeOnJob: toStr(row.guarantorTimeOnJob),
+    guarantorGrossAnnualIncome: toFloat(row.guarantorGrossAnnualIncome),
+    guarantorPreviousAddress: toStr(row.guarantorPreviousAddress),
+    guarantorPreviousCity: toStr(row.guarantorPreviousCity),
+    guarantorPreviousState: toStr(row.guarantorPreviousState),
+    guarantorPreviousZipcode: toStr(row.guarantorPreviousZipcode),
+    guarantorPreviousTimeOfResidence: toStr(row.guarantorPreviousTimeOfResidence),
+    guarantorPreviousTimeOnJob: toStr(row.guarantorPreviousTimeOnJob),
+    guarantorPreviousEmployerName: toStr(row.guarantorPreviousEmployerName),
+    guarantorPreviousEmployerPhone: toStr(row.guarantorPreviousEmployerPhone),
+    guarantorResidencyType: toResidency(row.guarantorResidencyType),
+    guarantorResidency: toStr(row.guarantorResidency),
+    guarantorRentMortgagePayment: toFloat(row.guarantorRentMortgagePayment),
+    guarantorSignatureData: toStr(row.guarantorSignatureData),
+
+    // Extra
+    salesperson: toStr(row.salesperson),
+    heardFrom: toStr(row.heardFrom),
+  }));
+
+  // Step 4: Bulk create in transaction — all or nothing
+  await prisma.$transaction(
+    applicationsData.map((data) => prisma.application.create({ data }))
+  );
+
+  // Step 5: Return created applications
+  const created = await prisma.application.findMany({
+    where: {
+      referenceId: { in: applicationsData.map((a) => a.referenceId) },
+    },
+  });
+
+  return {
+    total: created.length,
+    applications: created,
+  };
 };
 
 const createBusinessApplication = async (payload: any) => {
@@ -1434,6 +1806,8 @@ const updateApplication = async (id: string, data: any) => {
 };
 
 export const ApplicationService = {
+  uploadCSV,
+  exportAllApplications,
   createPersonalApplication,
   createBusinessApplication,
   getAllAplication,
